@@ -28,7 +28,7 @@ El proyecto fue desarrollado en Python y hace uso de las siguientes herramientas
 
 ## 📂 Estructura del Repositorio
 
-* `main.py` / `Informe_PDI_Tarea1.ipynb`: Código fuente con el algoritmo de procesamiento y el informe estructurado en formato IEEE.
+* `main.py` / `Informe_PDI_Tarea1.pdf`: Código fuente con el algoritmo de procesamiento y el informe estructurado en formato IEEE.
 * `video_PDI.mp4`: Video original capturado por el equipo para el análisis.
 * `resultados/`: Directorio que contiene los archivos generados por el script:
   * `video_procesado.mp4`: Video final con la trayectoria, variables en tiempo real y marcadores superpuestos.
@@ -38,11 +38,11 @@ El proyecto fue desarrollado en Python y hace uso de las siguientes herramientas
 ## 🚀 Instrucciones de Uso
 
 ### 1. Clonar el repositorio
-```bash
-git clone [https://github.com/ElKev118/Taller1-ProcesamientoDigitalImagenes.git](https://github.com/ElKev118/Taller1-ProcesamientoDigitalImagenes.git)
-cd TU_REPOSITORIO
-```
 
+```bash
+git clone https://github.com/ElKev118/Taller1-ProcesamientoDigitalImagenes.git
+cd Taller1-ProcesamientoDigitalImagenes
+```
 ### 2. Instalar dependencias
 ```bash
 pip install opencv-python numpy matplotlib scipy jupyterlab
