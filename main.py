@@ -269,3 +269,119 @@ def analisis_cinematico(pos_pixeles, tiempos):
     acel_suave = suavizar_savgol(acel, VENTANA_ACELERACION)
 
     return pos_m, vel_suave, acel_suave
+
+# ============================================================
+# GRÁFICAS
+# ============================================================
+
+def graficas(t, pos, v, a):
+    """Genera gráficas de posición, velocidad y aceleración"""
+    
+    _, axes = plt.subplots(3, 1, figsize=(10, 12))
+    
+    # Gráfica de posición
+    axes[0].plot(t, pos, 'b-', linewidth=1.5)
+    axes[0].set_title("Posición vs Tiempo")
+    axes[0].set_xlabel("Tiempo (s)")
+    axes[0].set_ylabel("Posición (m)")
+    axes[0].grid(True, alpha=0.3)
+    
+    # Gráfica de velocidad
+    axes[1].plot(t, v, 'g-', linewidth=1.5)
+    axes[1].set_title("Velocidad vs Tiempo")
+    axes[1].set_xlabel("Tiempo (s)")
+    axes[1].set_ylabel("Velocidad (m/s)")
+    axes[1].grid(True, alpha=0.3)
+    
+    # Añadir línea de velocidad promedio
+    vel_promedio = np.mean(np.abs(v))
+    axes[1].axhline(y=-vel_promedio, color='r', linestyle='--', 
+                    label=f'Promedio: {vel_promedio:.2f} m/s ({vel_promedio*3.6:.1f} km/h)')
+    axes[1].legend()
+    
+    # Gráfica de aceleración
+    axes[2].plot(t, a, 'r-', linewidth=1.5)
+    axes[2].set_title("Aceleración vs Tiempo")
+    axes[2].set_xlabel("Tiempo (s)")
+    axes[2].set_ylabel("Aceleración (m/s²)")
+    axes[2].grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    plt.savefig(os.path.join(RESULTADOS_DIR, "cinematica_completa.png"), dpi=150)
+    
+    # También guardar gráficas individuales
+    plt.figure(figsize=(8, 5))
+    plt.plot(t, pos, 'b-', linewidth=1.5)
+    plt.title("Posición vs Tiempo")
+    plt.xlabel("Tiempo (s)")
+    plt.ylabel("Posición (m)")
+    plt.grid(True, alpha=0.3)
+    plt.savefig(os.path.join(RESULTADOS_DIR, "posicion.png"), dpi=150)
+    
+    plt.figure(figsize=(8, 5))
+    plt.plot(t, v, 'g-', linewidth=1.5)
+    plt.title("Velocidad vs Tiempo")
+    plt.xlabel("Tiempo (s)")
+    plt.ylabel("Velocidad (m/s)")
+    plt.grid(True, alpha=0.3)
+    plt.axhline(y=-vel_promedio, color='r', linestyle='--', 
+                label=f'Promedio: {vel_promedio:.2f} m/s')
+    plt.legend()
+    plt.savefig(os.path.join(RESULTADOS_DIR, "velocidad.png"), dpi=150)
+    
+    plt.figure(figsize=(8, 5))
+    plt.plot(t, a, 'r-', linewidth=1.5)
+    plt.title("Aceleración vs Tiempo")
+    plt.xlabel("Tiempo (s)")
+    plt.ylabel("Aceleración (m/s²)")
+    plt.grid(True, alpha=0.3)
+    plt.savefig(os.path.join(RESULTADOS_DIR, "aceleracion.png"), dpi=150)
+    
+    plt.close('all')
+    
+    # Imprimir estadísticas
+    print("\n" + "="*50)
+    print("ESTADÍSTICAS DEL MOVIMIENTO")
+    print("="*50)
+    print(f"Duración total: {t[-1]:.2f} s")
+    print(f"Distancia recorrida: {abs(pos[-1] - pos[0]):.2f} m")
+    print(f"Velocidad promedio: {vel_promedio:.2f} m/s ({vel_promedio*3.6:.1f} km/h)")
+    print(f"Velocidad máxima: {np.max(np.abs(v)):.2f} m/s ({np.max(np.abs(v))*3.6:.1f} km/h)")
+    print(f"Aceleración promedio: {np.mean(np.abs(a)):.2f} m/s²")
+    print(f"Aceleración máxima: {np.max(np.abs(a)):.2f} m/s²")
+    print("="*50)
+
+
+# ============================================================
+# MAIN
+# ============================================================
+
+def main():
+
+    cap = cv2.VideoCapture(VIDEO_PATH)
+
+    if not cap.isOpened():
+        print("No se pudo abrir el video")
+        return
+
+    centroides_x, _, tiempos = procesar_video(cap)
+    
+    if len(centroides_x) < VENTANA_SUAVIZADO:
+        print("Error: No se detectaron suficientes puntos del vehículo")
+        return
+
+    pos, vel, acel = analisis_cinematico(centroides_x, tiempos)
+    
+    if pos is None:
+        print("Error en el análisis cinemático")
+        return
+
+    graficas(tiempos, pos, vel, acel)
+
+    print("\nProceso terminado.")
+    print("Video procesado guardado en:", VIDEO_SALIDA)
+    print("Gráficas guardadas en:", RESULTADOS_DIR)
+
+
+if __name__ == "__main__":
+    main()
