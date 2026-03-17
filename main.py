@@ -118,7 +118,8 @@ def procesar_video(cap):
             # Operaciones morfológicas mejoradas
             mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
             mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel_grande)
-            mask = cv2.morphologyEx(mask, cv2.MORPH_DILATE, kernel, iterations=1)
+            mask = cv2.morphologyEx(
+                mask, cv2.MORPH_DILATE, kernel, iterations=1)
 
             contours, _ = cv2.findContours(
                 mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -159,23 +160,25 @@ def procesar_video(cap):
 
             if len(centroides_x) > FRAME_DIFF * 2:
                 # Suavizar posiciones para cálculo en tiempo real
-                pos_suave = suavizar_datos(np.array(centroides_x), min(VENTANA_SUAVIZADO, len(centroides_x)))
-                
+                pos_suave = suavizar_datos(np.array(centroides_x), min(
+                    VENTANA_SUAVIZADO, len(centroides_x)))
+
                 # Velocidad con diferencias finitas centradas (más estable)
                 dx = (pos_suave[-1] - pos_suave[-1-FRAME_DIFF]) * ESCALA_FIJA
                 dt_total = FRAME_DIFF * dt
                 vel = dx / dt_total  # Puede ser negativo si va de A a B
-                
+
                 velocidades_display.append(vel)
 
             if len(velocidades_display) > FRAME_DIFF * 2:
                 # Suavizar velocidades para aceleración
-                vel_suave = suavizar_datos(np.array(velocidades_display), min(VENTANA_VELOCIDAD, len(velocidades_display)))
-                
+                vel_suave = suavizar_datos(np.array(velocidades_display), min(
+                    VENTANA_VELOCIDAD, len(velocidades_display)))
+
                 dv = vel_suave[-1] - vel_suave[-1-FRAME_DIFF]
                 dt_total = FRAME_DIFF * dt
                 acel = dv / dt_total
-                
+
                 aceleraciones_display.append(acel)
 
             for i in range(1, len(trayectoria)):
@@ -231,3 +234,38 @@ def procesar_video(cap):
     cv2.destroyAllWindows()
 
     return np.array(centroides_x), np.array(centroides_y), np.array(tiempos)
+
+# ============================================================
+# ANÁLISIS FINAL (con filtro Savitzky-Golay)
+# ============================================================
+
+
+def analisis_cinematico(pos_pixeles, tiempos):
+    """Análisis cinemático con suavizado Savitzky-Golay"""
+
+    if len(pos_pixeles) < VENTANA_SUAVIZADO:
+        print("Advertencia: pocos datos para análisis robusto")
+        return None, None, None
+
+    dt = tiempos[1] - tiempos[0]
+
+    # 1. Suavizar posición en píxeles
+    pos_suave_px = suavizar_savgol(pos_pixeles, VENTANA_SUAVIZADO)
+
+    # 2. Convertir a metros
+    pos_m = pos_suave_px * ESCALA_FIJA
+
+    # 3. Calcular velocidad con diferencias finitas (usando más frames)
+    # Usar gradiente numérico que es más estable que diff
+    vel = np.gradient(pos_m, dt)
+
+    # 4. Suavizar velocidad
+    vel_suave = suavizar_savgol(vel, VENTANA_VELOCIDAD)
+
+    # 5. Calcular aceleración
+    acel = np.gradient(vel_suave, dt)
+
+    # 6. Suavizar aceleración
+    acel_suave = suavizar_savgol(acel, VENTANA_ACELERACION)
+
+    return pos_m, vel_suave, acel_suave
